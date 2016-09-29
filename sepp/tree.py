@@ -55,11 +55,15 @@ def write_newick_node(node, out):
 
 class PhylogeneticTree(object):
     """Data structure to store phylogenetic tree, wrapping dendropy.Tree."""
-    def __init__(self, dendropy_tree):
+    def __init__(self, dendropy_tree, name=None):
         self._tree = dendropy_tree
         self.n_leaves = self.count_leaves()
         self._tree.seed_node.edge.tail_node = None
-        self._tree.seed_node.edge.length = None                  
+        self._tree.seed_node.edge.length = None
+        if name is None:
+            self.name = None
+        else:
+            self.name = name[0:3]
 
     def get_tree(self):
         return self._tree
@@ -160,8 +164,8 @@ class PhylogeneticTree(object):
         (t1_root,t2_root) = (root._child_nodes[0],root._child_nodes[1])
         t = self._tree
         t.prune_subtree(t1_root,update_splits=True,delete_outdegree_one=True)
-        t1 = PhylogeneticTree(t)
-        t2 = PhylogeneticTree(Tree(t1_root))
+        t1 = PhylogeneticTree(t, name=self.name)
+        t2 = PhylogeneticTree(Tree(t1_root), name=self.name)
         #Reroot if there's more than node left
         if (t2.n_leaves > 1):        
             t2._tree.reroot_at_node(t1_root)
@@ -186,7 +190,7 @@ class PhylogeneticTree(object):
         nr.edge.length = None
         nr.parent_node = None
         convert_node_to_root_polytomy(nr)
-        t1 = PhylogeneticTree(Tree(seed_node=nr))
+        t1 = PhylogeneticTree(Tree(seed_node=nr),name=self.name)
         n1 = t1.n_leaves # temp we could speed this up, by telling the Phylogenetic tree how many leaves it has
 
         if hasattr(e, "num_leaves_below"):
@@ -209,7 +213,7 @@ class PhylogeneticTree(object):
             while old_root.parent_node:
                 old_root = old_root.parent_node
 
-        t2 = PhylogeneticTree(Tree(seed_node=old_root))
+        t2 = PhylogeneticTree(Tree(seed_node=old_root),name=self.name)
 
         is_valid_tree(t1._tree)
         is_valid_tree(t2._tree)
@@ -270,7 +274,8 @@ class PhylogeneticTree(object):
         assert snl == tree1.n_leaves + tree2.n_leaves
         return tree1, tree2, e
 
-    def decompose_tree(self, maxSize, strategy, minSize = None, tree_map={}, decomp_strategy = 'normal'):
+    def decompose_tree(self, maxSize, strategy, minSize = None, tree_map={}, decomp_strategy = 'normal',
+                       named = False):
         """
         This function decomposes the tree until all subtrees are smaller than 
         the max size, but does not decompose below min size.  
@@ -278,7 +283,7 @@ class PhylogeneticTree(object):
         Returns a map containing the subtrees, in an ordered fashion.
         
         SIDE EFFECT: deroots the tree (TODO: necessary?)
-        """          
+        """
         #Don't deroot if doing clade-based decomposition
         if (strategy != 'clade'):
             self._tree.deroot()
@@ -287,17 +292,22 @@ class PhylogeneticTree(object):
             if self._tree.is_rooted == False:
                 self._tree.reroot_at_midpoint()
         if (decomp_strategy == 'hierarchical' and self.count_leaves() > maxSize):
+            # print 'decomp strategy hierarchical'
             tree_map[len(tree_map)] = copy.deepcopy(self)
 
         if (self.count_leaves() > maxSize):
             (t1, t2, e) = self.bisect_tree(strategy, minSize)
             if e is not None:
-                t1.decompose_tree(maxSize, strategy, minSize, tree_map, decomp_strategy)
-                t2.decompose_tree(maxSize, strategy, minSize, tree_map, decomp_strategy)
+                t1.decompose_tree(maxSize, strategy, minSize, tree_map, decomp_strategy, named=named)
+                t2.decompose_tree(maxSize, strategy, minSize, tree_map, decomp_strategy, named=named)
             else:
                 raise Exception("It was not possible to break-down the following tree according to given subset sizes: %d , %d:\n %s" %(minSize, maxSize, self._tree))
         else:
-            tree_map[len(tree_map)] = self
+            if named ==False:
+                tree_map[len(tree_map)] = self
+            else:
+                # print str(named) + ": " + self.name + ' ' + str(len(tree_map))
+                tree_map[self.name + str(len(tree_map))] = self
         return tree_map
     
     def lable_edges(self):

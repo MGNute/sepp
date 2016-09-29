@@ -200,7 +200,7 @@ class HMMBuildJob(ExternalSeppJob):
         self.molecule = molecule
         self.symfrac = symfrac
         if ('options' in kwargs):
-	        self.options = kwargs['options']        
+            self.options = kwargs['options']
         
 
     def setup_for_subproblem(self, subproblem, symfrac = True, molecule = "dna",**kwargs):
@@ -222,7 +222,7 @@ class HMMBuildJob(ExternalSeppJob):
                                                        subproblem)
         self.molecule = molecule
         if ('options' in kwargs):
-	        self.options = kwargs['options']        
+            self.options = kwargs['options']
         
         
     def get_invocation(self):
@@ -443,7 +443,7 @@ class PplacerJob(ExternalSeppJob):
         self.full_extended_alignment_file = full_extended_alignment_file
         self.out_file = output_file
         self._kwargs = kwargs      
-        self.setup_setting = "File:TrInEx"                  
+        self.setup_setting = "File:TrInEx"
 
     def partial_setup_for_subproblem(self, subproblem, info_file, **kwargs):
         ''' Automatically sets up a job given a subproblem object. 

@@ -219,4 +219,4 @@ class SeppProblem(Problem):
         ap_alg.build_extended_alignment(orig_path, extension_path, convert_to_string)
         ap_alg.relabel_original_columns(remaining_cols)
         return ap_alg
-                            
+
