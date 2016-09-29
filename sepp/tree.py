@@ -279,8 +279,7 @@ class PhylogeneticTree(object):
 
     #def decompose_tree(self, maxSize, strategy, minSize = None, tree_map={}, decomp_strategy = 'normal'):
     #def decompose_tree(self, maxSize, strategy, minSize = None, tree_map={}, decomp_strategy = 'normal', pdistance = 1, distances = None):
-    def decompose_tree(self, maxSize, strategy, minSize = None, tree_map={}, decomp_strategy = 'normal',pdistance = 1, distances = None
-                       named = False):
+    def decompose_tree(self, maxSize, strategy, minSize = None, tree_map={}, decomp_strategy = 'normal',pdistance = 1, distances = None, named = False):
         """
         This function decomposes the tree until all subtrees are smaller than 
         the max size, but does not decompose below min size.  
@@ -289,7 +288,6 @@ class PhylogeneticTree(object):
         
         SIDE EFFECT: deroots the tree (TODO: necessary?)
         """          
-        """
         #Don't deroot if doing clade-based decomposition
         if (strategy != 'clade'):
             self._tree.deroot()
