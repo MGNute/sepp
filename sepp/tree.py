@@ -23,8 +23,9 @@ from dendropy import Tree, Taxon, treecalc
 from dendropy import DataSet as Dataset
 from dendropy import convert_node_to_root_polytomy
 from sepp import get_logger, sortByValue
+from sepp.alignment import get_pdistance
 import cStringIO
-import sys,copy
+import sys,copy,pdb
 
 _LOG = get_logger(__name__)
 
@@ -110,6 +111,8 @@ class PhylogeneticTree(object):
                 n_leaves = sum([j.edge.num_leaves_below for j in root_children])
         centroid_edge = None
         centroid_imbalance = n_leaves
+        if (n_leaves <= minSize):
+            return None
         half_taxa = n_leaves/2
         for edge in self._tree.postorder_edge_iter():
             if edge.tail_node is None:
@@ -274,7 +277,9 @@ class PhylogeneticTree(object):
         assert snl == tree1.n_leaves + tree2.n_leaves
         return tree1, tree2, e
 
-    def decompose_tree(self, maxSize, strategy, minSize = None, tree_map={}, decomp_strategy = 'normal',
+    #def decompose_tree(self, maxSize, strategy, minSize = None, tree_map={}, decomp_strategy = 'normal'):
+    #def decompose_tree(self, maxSize, strategy, minSize = None, tree_map={}, decomp_strategy = 'normal', pdistance = 1, distances = None):
+    def decompose_tree(self, maxSize, strategy, minSize = None, tree_map={}, decomp_strategy = 'normal',pdistance = 1, distances = None
                        named = False):
         """
         This function decomposes the tree until all subtrees are smaller than 
@@ -283,6 +288,7 @@ class PhylogeneticTree(object):
         Returns a map containing the subtrees, in an ordered fashion.
         
         SIDE EFFECT: deroots the tree (TODO: necessary?)
+        """          
         """
         #Don't deroot if doing clade-based decomposition
         if (strategy != 'clade'):
@@ -294,14 +300,16 @@ class PhylogeneticTree(object):
         if (decomp_strategy == 'hierarchical' and self.count_leaves() > maxSize):
             # print 'decomp strategy hierarchical'
             tree_map[len(tree_map)] = copy.deepcopy(self)
-
-        if (self.count_leaves() > maxSize):
+        if (self.count_leaves() > maxSize or (pdistance != 1 and get_pdistance(distances, self.leaf_node_names()) > pdistance)):
             (t1, t2, e) = self.bisect_tree(strategy, minSize)
             if e is not None:
-                t1.decompose_tree(maxSize, strategy, minSize, tree_map, decomp_strategy, named=named)
-                t2.decompose_tree(maxSize, strategy, minSize, tree_map, decomp_strategy, named=named)
+                t1.decompose_tree(maxSize, strategy, minSize, tree_map, decomp_strategy,pdistance, distances,named=named)
+                t2.decompose_tree(maxSize, strategy, minSize, tree_map, decomp_strategy,pdistance, distances, named=named)
+                #t1.decompose_tree(maxSize, strategy, minSize, tree_map, decomp_strategy, pdistance, distances)
+                #t2.decompose_tree(maxSize, strategy, minSize, tree_map, decomp_strategy,pdistance, distances)
             else:
-                raise Exception("It was not possible to break-down the following tree according to given subset sizes: %d , %d:\n %s" %(minSize, maxSize, self._tree))
+                tree_map[len(tree_map)] = self
+                _LOG.warning("It was not possible to break-down the following tree according to given subset sizes: %d , %d:\n %s" %(minSize, maxSize, self._tree))
         else:
             if named ==False:
                 tree_map[len(tree_map)] = self

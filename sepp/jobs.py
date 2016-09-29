@@ -211,13 +211,15 @@ class HMMBuildJob(ExternalSeppJob):
         assert isinstance(subproblem, sepp.problem.SeppProblem)
         assert isinstance(subproblem.subalignment, sepp.problem.ReadonlySubalignment)
         self.symfrac = symfrac
+        #pdb.set_trace()
         self.infile = sepp.filemgr.tempfile_for_subproblem("hmmbuild.input.", 
                                                        subproblem,
                                                        ".fasta")
-        
+        #pdb.set_trace()
         subproblem.write_subalignment_without_allgap_columns(self.infile)
-        
+        #pdb.set_trace()
         self.informat = "fasta"
+        self.symfrac = symfrac
         self.outfile = sepp.filemgr.tempfile_for_subproblem("hmmbuild.model.", 
                                                        subproblem)
         self.molecule = molecule
@@ -226,7 +228,7 @@ class HMMBuildJob(ExternalSeppJob):
         
         
     def get_invocation(self):
-        invoc = [self.path, "--cpu", "1", "--%s" % self.molecule]
+        invoc = [self.path, '--ere', '0.59', "--cpu", "1", "--%s" % self.molecule]
         if self.symfrac == True:
             invoc.extend(["--symfrac", "0.0"])
         if self.options != "":
@@ -234,6 +236,7 @@ class HMMBuildJob(ExternalSeppJob):
         if self.informat == "fasta":
             invoc.extend(['--informat', 'afa'])
         invoc.extend([self.outfile, self.infile])
+        _LOG.debug("Running HMMBUILD command: %s" % " ".join(invoc))         
         return invoc
 
     def characterize_input(self):
@@ -292,11 +295,8 @@ class HMMAlignJob(ExternalSeppJob):
         self._kwargs = kwargs  
                     
     def get_invocation(self):
-        invoc = [self.path, "--allcol", "--%s" % self.molecule,
-                 "-o", self.outfile]
-
-        #invoc = [self.path, "--%s" % self.molecule,
-        #         "-o", self.outfile]
+        invoc = [self.path, "--%s" % self.molecule,
+                   "-o", self.outfile]
 
         if self.trim:
             invoc.extend(["--trim"])
